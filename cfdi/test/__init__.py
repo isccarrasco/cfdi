@@ -12,12 +12,16 @@ from datetime import datetime
 class MainTest(unittest.TestCase):
     def setUp(self):
         cer_file = pkg_resources.resource_filename(
-            'cfdi', 'test/CSD01_AAA010101AAA.cer')
+            'cfdi', 'test/ecodex.cer')
         cer = open(cer_file, 'r')
+        # cer_file = pkg_resources.resource_filename('cfdi', 'test/CSD01_AAA010101AAA.cer')
+        # cer = open(cer_file, 'rb')
         self.cer = base64.b64encode(cer.read())
         key_file = pkg_resources.resource_filename(
-            'cfdi', 'test/CSD01_AAA010101AAA.key')
+            'cfdi', 'test/ecodex.key')
         key = open(key_file, 'r')
+        # key_file = pkg_resources.resource_filename('cfdi', 'test/CSD01_AAA010101AAA.key')
+        # key = open(key_file, 'rb')
         self.key = base64.b64encode(key.read())
         self.pwd = '12345678a'
         self.data = {

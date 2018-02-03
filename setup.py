@@ -26,7 +26,7 @@ setup(
         'Topic :: Software Development :: Build Tools',
         'License :: OSI Approved :: GNU Affero General Public License v3 or '
         'later (AGPLv3+)',
-        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.6',
     ],
     keywords='cfdi mexico invoice einvoice',
     packages=find_packages(),
@@ -34,6 +34,8 @@ setup(
         'lxml',
         'Jinja2',
         'M2Crypto',
+        'pyOpenSSL',
+        'requests',
         ],
     test_suite="cfdi.test",
     package_data={

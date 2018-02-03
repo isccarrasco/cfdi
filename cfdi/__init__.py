@@ -7,6 +7,10 @@ import pkg_resources
 import os
 import lxml.etree as ET
 from M2Crypto import X509, RSA
+from asn1crypto import x509
+from asn1crypto.keys import RSAPrivateKey
+from asn1crypto.algos import SignedDigestAlgorithm, DigestAlgorithm
+from asn1crypto import pem
 import base64
 import tempfile
 import hashlib
@@ -26,6 +30,7 @@ class invoice(object):
         with open(jinja_file, 'r') as template:
             jinja_tmpl_str = template.read().encode('utf-8')
         tmpl = Template(jinja_tmpl_str)
+        # tmpl = Template(jinja_tmpl_str.decode('utf-8'))
         cls.xml = tmpl.render(data=data).encode('utf-8')
         cls.cadena_original = cls.generate_cadena_original(cls.xml)
         cls.sello = cls.get_sello()
@@ -62,6 +67,10 @@ class invoice(object):
         cert = X509.load_cert_string(
             base64.decodestring(cer), X509.FORMAT_DER)
         serial = str(u'{0:0>40x}'.format(cert.get_serial_number()))
+
+        certif = x509.Certificate.load(base64.b64decode(cer))
+        # serial = str(u'{0:0>40x}'.format(cert.serial_number))
+
         return serial.replace('33', 'B').replace('3', '').replace(
             'B', '3').replace(' ', '').replace('\r', '').replace(
             '\n', '').replace('\r\n', '')
@@ -69,14 +78,29 @@ class invoice(object):
     @classmethod
     def get_sello(cls):
         key_file = cls.base64_to_tempfile(key, '', '')
-        (no, pem) = tempfile.mkstemp()
+        (no, pem_path) = tempfile.mkstemp()
         os.close(no)
         cmd = ('openssl pkcs8 -inform DER -outform PEM'
-               ' -in "%s" -passin pass:%s -out %s' % (key_file, pwd, pem))
+               ' -in "%s" -passin pass:%s -out %s' % (key_file, pwd, pem_path))
         os.system(cmd)
-        keys = RSA.load_key(pem)
-        digest = hashlib.new('sha1', cls.cadena_original).digest()
-        return base64.b64encode(keys.sign(digest, "sha1"))
+        keys = RSA.load_key(pem_path)
+        digest = hashlib.new('sha256', cls.cadena_original).digest()
+
+        # keyss = RSAPrivateKey.load(base64.b64decode(key))
+        # key_file = cls.base64_to_tempfile(key, '', '')
+        # (no, pem_path) = tempfile.mkstemp()
+        # os.close(no)
+        # cmd = ('openssl pkcs8 -inform DER -outform PEM -in "%s" -passin pass:%s -out %s' % (key_file, pwd, pem_path))
+        # os.system(cmd)
+        pem_file = open(pem_path, 'rb').read()
+        if pem.detect(pem_file):
+            _, _, der_bytes = pem.unarmor(pem_file)
+
+        llave = RSAPrivateKey.load(base64.b64decode(key))
+
+        sha1 = SignedDigestAlgorithm({'algorithm': unicode('sha1'), 'parameters': unicode(cls.cadena_original)})
+
+        return base64.b64encode(keys.sign(digest, "sha256"))
 
     @classmethod
     def base64_to_tempfile(cls, b64_str=None, suffix=None, prefix=None):
